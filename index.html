@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+        .h2{ text-align: center; font-size: 23px; margin-bottom: 20px; font-weight: bold;}
+        .cont{padding: 30px;background-color: #00a6ed;;border-radius: 10px;width: 70%;margin: auto;}
+        #cargar{width: 120px;border-radius: 6px;border: none;}
+        input{padding: 8px; background-color: #96daf8;color: white; border-radius: 4px;width: 100%;}
+        input:hover{background-color: #ffd86e; border-color: #ffd86e;}
+    </style>
+    <base target="_top">
+    <script>
+      function preventFormSubmit() {
+        var forms = document.querySelectorAll('form');
+        for (var i = 0; i < forms.length; i++) {
+          forms[i].addEventListener('submit', function(event) {
+            event.preventDefault();
+          });
+        }
+      }
+      window.addEventListener('load', preventFormSubmit);
+
+      function handleFormSubmit(formObject) {
+        google.script.run.withSuccessHandler(updateUrl).processForm(formObject);
+      }
+      function updateUrl(url) {
+        var div = document.getElementById('output');
+        div.innerHTML = '<b><a href="' + url + '" target="_blanck">Ver el Archivo!</a></b>';
+      }
+    </script>
+  </head>
+  <body>
+    <div class="cont">
+        <h2 class="h2">Enviar y Convertir Excel a Sheets en Drive</h2>
+        <form id="myForm" onsubmit="handleFormSubmit(this)">
+        <input name="myFile" type="file" />
+        <br><br>
+        <input id="cargar" type="submit" value="Enviar" />
+        </form>
+        <div id="output"></div>
+        <p>Nota: Recuerda que este Proceso Podria Tardar un Poco</p>
+    </div>
+ </body>
+</html>
