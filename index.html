@@ -1,44 +1,118 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <style>
-        .h2{ text-align: center; font-size: 23px; margin-bottom: 20px; font-weight: bold;}
-        .cont{padding: 30px;background-color: #00a6ed;;border-radius: 10px;width: 70%;margin: auto;}
-        #cargar{width: 120px;border-radius: 6px;border: none;}
-        input{padding: 8px; background-color: #96daf8;color: white; border-radius: 4px;width: 100%;}
-        input:hover{background-color: #ffd86e; border-color: #ffd86e;}
-    </style>
-    <base target="_top">
-    <script>
-      function preventFormSubmit() {
-        var forms = document.querySelectorAll('form');
-        for (var i = 0; i < forms.length; i++) {
-          forms[i].addEventListener('submit', function(event) {
-            event.preventDefault();
-          });
-        }
-      }
-      window.addEventListener('load', preventFormSubmit);
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enviar y Convertir Excel a Sheets en Drive</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Personalización adicional */
+    .cont {
+      padding: 30px;
+      background-color: #ffb5b5; /* Cambia el color de fondo */
+      border-radius: 10px;
+      width: 70%;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Agrega una sombra suave */
+      color: #534c4c; /* Cambia el color del texto */
+    }
+    .h2 {
+      text-align: center;
+      font-size: 23px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      color: #534c4c; /* Cambia el color del texto */
+    }
+    input[type="file"] {
+      display: none; /* Oculta el input file nativo */
+    }
+    .custom-file-upload {
+      border: 1px solid #ced4da; /* Añade un borde */
+      color: #495057; /* Cambia el color del texto */
+      background-color: #e9ecef; /* Cambia el color de fondo */
+      border-radius: 4px; /* Añade bordes redondeados */
+      cursor: pointer; /* Cambia el cursor al pasar el ratón */
+      padding: 8px 12px; /* Ajusta el espacio interno */
+      width: 100%;
+      text-align: center; /* Centra el texto */
+    }
+    .custom-file-upload:hover {
+      background-color: #dee2e6; /* Cambia el color de fondo al pasar el ratón */
+      border-color: #bdc2c6; /* Cambia el color del borde al pasar el ratón */
+    }
+    #cargar {
+      width: 100%;
+      border-radius: 6px;
+      background-color: #e76a6a; /* Cambia el color de fondo del botón */
+      border: 1px solid #e76a6a; /* Cambia el color del borde del botón */
+    }
+    #cargar:hover {
+      background-color: #d9534f; /* Cambia el color de fondo del botón al pasar el ratón */
+      border: 1px solid #d9534f; /* Cambia el color del borde del botón al pasar el ratón */
+    }
+    p {
+      text-align: center; /* Centra el texto */
+      font-weight: bold; /* Añade negrita */
+      color: #e76a6a; /* Cambia el color del texto */
+      margin-top: 10px; /* Añade espacio superior */
+    }
+    .nota {
+      font-style: italic; /* Agrega estilo cursiva */
+      color: #534c4c; /* Cambia el color del texto */
+    }
+  </style>
+</head>
+<body>
+  <div class="cont">
+    <h2 class="h2">Enviar y Convertir Excel a Sheets en Drive</h2>
+    <form id="myForm" onsubmit="handleFormSubmit(this)">
+      <label for="file-upload" class="custom-file-upload">
+        <input id="file-upload" name="myFile" type="file" onchange="this.parentNode.nextSibling.value = this.files[0].name">
+        📥 Seleccionar Archivo 📥
+        </br>
+        </br>
+        <input id="file-name" class="form-control mt-2" readonly>
+      </label>
+      <input id="cargar" type="submit" class="btn btn-primary mt-3" value="Enviar">
+    </form>
+    <div id="output" class="mt-3"></div>
+    <p class="nota">Nota: <span>Recuerda que este Proceso Podría Tardar un Poco</span></p>
+  </div>
 
-      function handleFormSubmit(formObject) {
-        google.script.run.withSuccessHandler(updateUrl).processForm(formObject);
+  <!-- Bootstrap JS -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script>
+    function preventFormSubmit() {
+      var forms = document.querySelectorAll('form');
+      for (var i = 0; i < forms.length; i++) {
+        forms[i].addEventListener('submit', function(event) {
+          event.preventDefault();
+        });
       }
-      function updateUrl(url) {
-        var div = document.getElementById('output');
-        div.innerHTML = '<b><a href="' + url + '" target="_blanck">Ver el Archivo!</a></b>';
+    }
+    window.addEventListener('load', preventFormSubmit);
+
+    function handleFormSubmit(formObject) {
+      google.script.run.withSuccessHandler(updateUrl).processForm(formObject);
+    }
+
+    function updateUrl(url) {
+      var div = document.getElementById('output');
+      if (url.includes("Error")) {
+        alert("Ha ocurrido un error al procesar el archivo.");
+      } else {
+        div.innerHTML = '<b><a href="' + url + '" target="_blank">Ver el Archivo!</a></b>';
       }
-    </script>
-  </head>
-  <body>
-    <div class="cont">
-        <h2 class="h2">Enviar y Convertir Excel a Sheets en Drive</h2>
-        <form id="myForm" onsubmit="handleFormSubmit(this)">
-        <input name="myFile" type="file" />
-        <br><br>
-        <input id="cargar" type="submit" value="Enviar" />
-        </form>
-        <div id="output"></div>
-        <p>Nota: Recuerda que este Proceso Podria Tardar un Poco</p>
-    </div>
- </body>
+    }
+
+    // Muestra el nombre del archivo seleccionado
+    document.getElementById('file-upload').onchange = function () {
+      document.getElementById('file-name').value = this.value.split("\\").pop();
+    };
+  </script>
+</body>
 </html>

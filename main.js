@@ -2,10 +2,50 @@
 function onOpen() {
     const ui = SpreadsheetApp.getUi();
     ui.createMenu('🤖❗ Menú de Parametros')
-      .addItem('🔔- Importar Excel Local y Convertir', 'importLocal')
+      .addItem('🔔- Importar Excel y Convertir', 'importLocal')
       .addItem('❎🗑- Limpiar Todo', 'confirmClearData')
       .addToUi();
 }
+
+//----------------------------------------------------------
+//----------------------------------------------------------
+//---Forma #1 de Convertir a Sheets buscandolo por nombre---
+//----------------------------------------------------------
+//----------------------------------------------------------
+function convertirExcel_a_GoogleSheets(){
+  var files = DriveApp.getFilesByName("Close_Cards_Data.xlsx");
+
+  while(files.hasNext()){
+    var archivo = files.next();
+    var nombre = archivo.getName();
+    var id = archivo.getId();
+    var blob = archivo.getBlob();
+  }
+  
+  var folderId = "1_Xkb_TBY63MI1fMdNUQx8zM4jk8jEwyN"; // ID de la carpeta deseada
+  var nvaHCG = {
+    title: "[a GSheets] " + nombre,
+    parents: [{id: folderId}],
+    mimeType: MimeType.GOOGLE_SHEETS
+  }
+  var hcg = Drive.Files.insert(nvaHCG, blob, {convert:true}); //Hoja de Calculo Google
+
+  var titulo = hcg.title ;
+  var enlace = hcg.alternateLink;
+  
+  var htmlOutput = HtmlService
+    .createHtmlOutput('<p>Nombre: '+ titulo + '</p>' +
+                      '<p>Abrir desde aquí : <a target="_blank" href="'+enlace+'">ver archivo</a></p>')  
+    .setWidth(300)
+    .setHeight(130);
+  SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'Conversión exitosa');
+}
+
+//----------------------------------------------------------
+//----------------------------------------------------------
+//---Forma #2 de Convertir a Sheets de un archivo Local-----
+//----------------------------------------------------------
+//----------------------------------------------------------
 
 //Funcion para Conectarse al Sheet
 function conectionSheets() {

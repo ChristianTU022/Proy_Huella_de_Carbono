@@ -3,7 +3,7 @@
   "dependencies": {
     "enabledAdvancedServices": [
       {
-        "userSymbol": "APIDrive",
+        "userSymbol": "Drive",
         "version": "v2",
         "serviceId": "drive"
       }
