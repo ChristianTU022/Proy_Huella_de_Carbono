@@ -111,7 +111,9 @@
 
     // Muestra el nombre del archivo seleccionado
     document.getElementById('file-upload').onchange = function () {
-      document.getElementById('file-name').value = this.value.split("\\").pop();
+      var fileName = this.value.split("\\").pop(); // Obtiene el nombre completo del archivo
+      var fileNameWithoutExtension = fileName.split('.').slice(0, -1).join('.'); // Elimina la extensión del archivo
+      document.getElementById('file-name').value = fileNameWithoutExtension; // Muestra el nombre del archivo sin la extensión
     };
   </script>
 </body>
