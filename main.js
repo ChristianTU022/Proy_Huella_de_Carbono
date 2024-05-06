@@ -86,40 +86,44 @@ function confirmClearData() {
 }
 
 function copyDataFromVT12File() {
-  var archivoDestino = SpreadsheetApp.openById('19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA');
-  var destino = archivoDestino.getActiveSheet();
-  var hojaDestino = destino.getRange("Carga")
+  //Datos del Archivo Origen
+  var fechaActual = new Date();
+  var mesAnterior = fetchLastMonth(); // Obtener el mes anterior
+  var currentYear = fechaActual.getFullYear(); // Obtener el año actual
+  var nombreArchivoOrigen = "[GSheets-]VT12 " + mesAnterior + " " + currentYear;
+  Logger.log (nombreArchivoOrigen)
+  var nombreHojaOrigen = "Hoja1";
+  var rangoDatosOrigen = "A2:A";
 
+  //Datos del Archivo Destino
+  var idArchivoDestino = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
+  var nombreHojaDestino = "Carga";
+  var filaInicioDestino = 18;
+  var columnaDestino = 2;
 
+  var archivosOrigen = DriveApp.getFilesByName(nombreArchivoOrigen);
+  if (archivosOrigen.hasNext()) {
+    var archivoOrigen = archivosOrigen.next();
+    var hojaOrigen = SpreadsheetApp.openById(archivoOrigen.getId()).getSheetByName(nombreHojaOrigen);
+    var datosOrigen = hojaOrigen.getRange(rangoDatosOrigen).getValues();
 
-  // var fechaActual = new Date();
-  // var mesAnterior = fetchLastMonth(); // Obtener el mes anterior
-  // var currentYear = fechaActual.getFullYear(); // Obtener el año actual
-  //var nombreArchivoOrigen = "[GSheets-]VT12 " + mesAnterior + " " + currentYear;
-  // var nombreArchivoOrigen = "Qwerty123";
-  // Logger.log (nombreArchivoOrigen)
+    // Acceder al archivo de destino
+    var archivoDestino = SpreadsheetApp.openById(idArchivoDestino);
+    var hojaDestino = archivoDestino.getSheetByName(nombreHojaDestino);
 
-  // Logger.log("Nombre del archivo de origen: " + nombreArchivoOrigen);
+    // Calcular la cantidad de filas de datos a copiar
+    var numRows = datosOrigen.length;
 
-  // var archivoOrigen = SpreadsheetApp.getActive().getSheetByName(nombreArchivoOrigen);
+    // Pegar los datos en la hoja de destino
+    hojaDestino.getRange(filaInicioDestino, columnaDestino, numRows, 1).setValues(datosOrigen);
 
-  // if (!archivoOrigen) {
-  //   Logger.log("Error: No se encontró el archivo de origen.");
-  // }
-
-  // var hojaOrigen = archivoOrigen.getActiveSheet();
-  // var datosColumnaA = hojaOrigen.getRange("A2:A").getValues().filter(String); // Obtener los datos de la columna A sin filas vacías
-  
-  // // Abrir el archivo de destino y pegar los datos en la columna B a partir de la fila 18
-  // if (!archivoDestino) {
-  //   Logger.log("Error: No se encontró el archivo de destino.");
-  // }
-
-  // var hojaDestino = archivoDestino.getActiveSheet();
-  // var rangoDestino = hojaDestino.getRange(18, 2, datosColumnaA.length, 1); // Definir el rango de destino (columna B, fila 18 en adelante)
-  // rangoDestino.setValues(datosColumnaA); // Pegar los datos en el rango de destino
+    
+    hojaDestino.getRange(filaInicioDestino, 1, numRows, 1).setValue("Pastas");
+    hojaDestino.getRange(filaInicioDestino, 6, numRows, 1).setValue("Seco");
+  } else {
+    Logger.log("¡No se encontró el archivo de origen!");
+  }
 }
-
 
 function fetchLastMonth() {
   var currentDate = new Date();
