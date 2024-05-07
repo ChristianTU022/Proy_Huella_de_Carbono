@@ -82,7 +82,7 @@ function confirmAndCleanData(sheetName, confirmationMessage, lastColumn) {
 //Funcion que permite Limpiar los datos del formulario sheets la hoja "Carga"
 function confirmClearData() {
     //Se debe especificar hasta el numero de Columna que se desea eliminar (ultimo parametro)
-    confirmAndCleanData('Carga', '¿Está seguro de que desea limpiar los datos de "Carga"?\n\nEste proceso limpiará cualquier tipo de dato', 'R');
+    confirmAndCleanData('Carga', '¿Está seguro de que desea limpiar los datos de "Carga"?\n\nEste proceso limpiará cualquier tipo de dato', 'T');
 }
 
 function copyDataFromVT12File() {
@@ -94,6 +94,13 @@ function copyDataFromVT12File() {
   Logger.log (nombreArchivoOrigen)
   var nombreHojaOrigen = "Hoja1";
   var rangoDatosOrigen = "A2:A";
+  var rangoCategoriasOrigen = "M2:M";
+  var rangoACOrigen = "AC2:AC";
+  var rangoFOrigen = "F2:F";
+  var rangoXOrigen = "X2:X";
+  var rangoLOrigen = "L2:L";
+  var rangoBOrigen = "B2:B";
+  var rangoAVOrigen = "AV2:AV";
 
   //Datos del Archivo Destino
   var idArchivoDestino = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
@@ -106,20 +113,52 @@ function copyDataFromVT12File() {
     var archivoOrigen = archivosOrigen.next();
     var hojaOrigen = SpreadsheetApp.openById(archivoOrigen.getId()).getSheetByName(nombreHojaOrigen);
     var datosOrigen = hojaOrigen.getRange(rangoDatosOrigen).getValues();
+    var categoriasOrigen = hojaOrigen.getRange(rangoCategoriasOrigen).getValues();
+    var acOrigen = hojaOrigen.getRange(rangoACOrigen).getValues();
+    var fOrigen = hojaOrigen.getRange(rangoFOrigen).getValues();
+    var xOrigen = hojaOrigen.getRange(rangoXOrigen).getValues();
+    var lOrigen = hojaOrigen.getRange(rangoLOrigen).getValues();
+    var bOrigen = hojaOrigen.getRange(rangoBOrigen).getValues();
+    var avOrigen = hojaOrigen.getRange(rangoAVOrigen).getValues();
 
     // Acceder al archivo de destino
     var archivoDestino = SpreadsheetApp.openById(idArchivoDestino);
     var hojaDestino = archivoDestino.getSheetByName(nombreHojaDestino);
 
+    // Filtrar los datos de la columna B que no comiencen por "580"
+    var datosFiltrados = [];
+    for (var i = 0; i < bOrigen.length; i++) {
+      if (!bOrigen[i][0] || bOrigen[i][0].toString().indexOf("580") !== 0) {
+        datosFiltrados.push(datosOrigen[i]);
+      }
+    }
+
     // Calcular la cantidad de filas de datos a copiar
-    var numRows = datosOrigen.length;
+    var numRows = datosFiltrados.length;
 
     // Pegar los datos en la hoja de destino
-    hojaDestino.getRange(filaInicioDestino, columnaDestino, numRows, 1).setValues(datosOrigen);
+    hojaDestino.getRange(filaInicioDestino, columnaDestino, numRows, 1).setValues(datosFiltrados);
 
-    
+    // Agregar "Pastas" en la columna A y "Seco" en la columna F
     hojaDestino.getRange(filaInicioDestino, 1, numRows, 1).setValue("Pastas");
     hojaDestino.getRange(filaInicioDestino, 6, numRows, 1).setValue("Seco");
+
+    // Verificar las categorías y colocar "Primario" o "Secundario" en la columna C
+    for (var i = 0; i < categoriasOrigen.length; i++) {
+      if (categoriasOrigen[i][0] === "ZP01" || categoriasOrigen[i][0] === "ZP02" || categoriasOrigen[i][0] === "ZP07") {
+        hojaDestino.getRange(filaInicioDestino + i, 3).setValue("Primario");
+      } else if (categoriasOrigen[i][0] === "ZP03" || categoriasOrigen[i][0] === "ZP04" || categoriasOrigen[i][0] === "ZP05" || categoriasOrigen[i][0] === "ZP06" || categoriasOrigen[i][0] === "ZP08") {
+        hojaDestino.getRange(filaInicioDestino + i, 3).setValue("Secundario");
+      }
+    }
+
+    // Copiar datos adicionales del archivo de origen al archivo de destino
+    hojaDestino.getRange(filaInicioDestino, 17, numRows, 1).setValues(acOrigen);
+    hojaDestino.getRange(filaInicioDestino, 4, numRows, 1).setValues(fOrigen);
+    hojaDestino.getRange(filaInicioDestino, 5, numRows, 1).setValues(xOrigen);
+    hojaDestino.getRange(filaInicioDestino, 20, numRows, 1).setValues(lOrigen);
+    hojaDestino.getRange(filaInicioDestino, 19, numRows, 1).setValues(bOrigen);
+    hojaDestino.getRange(filaInicioDestino, 12, numRows, 1).setValues(avOrigen);
   } else {
     Logger.log("¡No se encontró el archivo de origen!");
   }
