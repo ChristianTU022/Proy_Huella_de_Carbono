@@ -4,6 +4,8 @@ function onOpen() {
     ui.createMenu('🤖❗ Menú de Parametros')
       .addItem('🔔- Importar Excel y Convertir', 'importLocal')
       .addItem('📄➔📄- Copiar Datos de VT12', 'copyDataFromVT12File')
+      .addItem('❌✅ - Eliminar Filas por Condiciones', 'removeSpecificRows')
+      .addItem('Depurar Base de Datos', '')
       .addItem('❎🗑- Limpiar Todo', 'confirmClearData')
       .addToUi();
 }
@@ -82,7 +84,7 @@ function confirmAndCleanData(sheetName, confirmationMessage, lastColumn) {
 //Funcion que permite Limpiar los datos del formulario sheets la hoja "Carga"
 function confirmClearData() {
     //Se debe especificar hasta el numero de Columna que se desea eliminar (ultimo parametro)
-    confirmAndCleanData('Carga', '¿Está seguro de que desea limpiar los datos de "Carga"?\n\nEste proceso limpiará cualquier tipo de dato', 'T');
+    confirmAndCleanData('Carga', '¿Está seguro de que desea limpiar los datos de "Carga"?\n\nEste proceso limpiará cualquier tipo de dato', 'U');
 }
 
 function copyDataFromVT12File() {
@@ -101,6 +103,7 @@ function copyDataFromVT12File() {
   var rangoLOrigen = "L2:L";
   var rangoBOrigen = "B2:B";
   var rangoAVOrigen = "AV2:AV";
+  var rangoHOrigen = "H2:H"
 
   //Datos del Archivo Destino
   var idArchivoDestino = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
@@ -120,6 +123,7 @@ function copyDataFromVT12File() {
     var lOrigen = hojaOrigen.getRange(rangoLOrigen).getValues();
     var bOrigen = hojaOrigen.getRange(rangoBOrigen).getValues();
     var avOrigen = hojaOrigen.getRange(rangoAVOrigen).getValues();
+    var hOrigen = hojaOrigen.getRange(rangoHOrigen).getValues();
 
     // Acceder al archivo de destino
     var archivoDestino = SpreadsheetApp.openById(idArchivoDestino);
@@ -159,11 +163,13 @@ function copyDataFromVT12File() {
     hojaDestino.getRange(filaInicioDestino, 20, numRows, 1).setValues(lOrigen);
     hojaDestino.getRange(filaInicioDestino, 19, numRows, 1).setValues(bOrigen);
     hojaDestino.getRange(filaInicioDestino, 12, numRows, 1).setValues(avOrigen);
+    hojaDestino.getRange(filaInicioDestino, 21, numRows, 1).setValues(hOrigen);
   } else {
     Logger.log("¡No se encontró el archivo de origen!");
   }
 }
 
+//Funcion para calcular el mes perteneciente al nombre del Excel
 function fetchLastMonth() {
   var currentDate = new Date();
   var currentMonth = currentDate.getMonth();
@@ -178,6 +184,39 @@ function fetchLastMonth() {
   var previousMonthName = monthNames[previousMonth];
   //Logger.log("Mes anterior: " + previousMonthName);
   return previousMonthName;
+}
+
+//Funcion dedicada a eliminar las filas especificas que no se envian (Limpieza de la BD )
+function removeSpecificRows (){
+ // ID del archivo en el que se trabajarán los datos
+ var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
+  
+ // Abrir el archivo de destino
+ var archivoDestino = SpreadsheetApp.openById(idArchivo);
+ var hojaDestino = archivoDestino.getSheetByName("Carga");
+
+ // Obtener los datos de la hoja
+ var datos = hojaDestino.getDataRange().getValues();
+ 
+ // Recorrer los datos desde la última fila hasta la primera
+ for (var i = datos.length - 1; i >= 0; i--) {
+   var fila = datos[i];
+   
+   // Eliminar filas que comiencen con "580" en la columna B
+   if (fila[1].toString().indexOf("580") === 0) {
+     hojaDestino.deleteRow(i + 1);
+   }
+   
+   // Eliminar filas donde el valor en la columna S sea "PINTER"
+   if (fila[18].toString() === "PINTER") {
+     hojaDestino.deleteRow(i + 1);
+   }
+   
+   // Eliminar filas donde el valor en la columna T sea "DR11" o "DR15"
+   if (fila[19].toString() === "DR11" || fila[19].toString() === "DR15") {
+     hojaDestino.deleteRow(i + 1);
+   }
+ }
 }
 
 
