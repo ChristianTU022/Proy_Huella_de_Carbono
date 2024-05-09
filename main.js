@@ -84,7 +84,7 @@ function confirmAndCleanData(sheetName, confirmationMessage, lastColumn) {
 //Funcion que permite Limpiar los datos del formulario sheets la hoja "Carga"
 function confirmClearData() {
     //Se debe especificar hasta el numero de Columna que se desea eliminar (ultimo parametro)
-    confirmAndCleanData('Carga', '¿Está seguro de que desea limpiar los datos de "Carga"?\n\nEste proceso limpiará cualquier tipo de dato', 'U');
+    confirmAndCleanData('Carga', '¿Está seguro de que desea limpiar los datos de "Carga"?\n\nEste proceso limpiará cualquier tipo de dato', 'V');
 }
 
 function copyDataFromVT12File() {
@@ -93,7 +93,7 @@ function copyDataFromVT12File() {
   var mesAnterior = fetchLastMonth(); // Obtener el mes anterior
   var currentYear = fechaActual.getFullYear(); // Obtener el año actual
   var nombreArchivoOrigen = "[GSheets-]VT12 " + mesAnterior + " " + currentYear;
-  Logger.log (nombreArchivoOrigen)
+  //Logger.log(nombreArchivoOrigen);
   var nombreHojaOrigen = "Hoja1";
   var rangoDatosOrigen = "A2:A";
   var rangoCategoriasOrigen = "M2:M";
@@ -103,7 +103,10 @@ function copyDataFromVT12File() {
   var rangoLOrigen = "L2:L";
   var rangoBOrigen = "B2:B";
   var rangoAVOrigen = "AV2:AV";
-  var rangoHOrigen = "H2:H"
+  var rangoHOrigen = "H2:H";
+  var rangoOOrigen = "O2:O";
+  var rangoPOrigen = "P2:P";
+  var rangoQOrigen = "Q2:Q";
 
   //Datos del Archivo Destino
   var idArchivoDestino = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
@@ -124,6 +127,9 @@ function copyDataFromVT12File() {
     var bOrigen = hojaOrigen.getRange(rangoBOrigen).getValues();
     var avOrigen = hojaOrigen.getRange(rangoAVOrigen).getValues();
     var hOrigen = hojaOrigen.getRange(rangoHOrigen).getValues();
+    var oOrigen = hojaOrigen.getRange(rangoOOrigen).getValues();
+    var pOrigen = hojaOrigen.getRange(rangoPOrigen).getValues();
+    var qOrigen = hojaOrigen.getRange(rangoQOrigen).getValues();
 
     // Acceder al archivo de destino
     var archivoDestino = SpreadsheetApp.openById(idArchivoDestino);
@@ -149,9 +155,19 @@ function copyDataFromVT12File() {
 
     // Verificar las categorías y colocar "Primario" o "Secundario" en la columna C
     for (var i = 0; i < categoriasOrigen.length; i++) {
-      if (categoriasOrigen[i][0] === "ZP01" || categoriasOrigen[i][0] === "ZP02" || categoriasOrigen[i][0] === "ZP07") {
+      if (
+        categoriasOrigen[i][0] === "ZP01" ||
+        categoriasOrigen[i][0] === "ZP02" ||
+        categoriasOrigen[i][0] === "ZP07"
+      ) {
         hojaDestino.getRange(filaInicioDestino + i, 3).setValue("Primario");
-      } else if (categoriasOrigen[i][0] === "ZP03" || categoriasOrigen[i][0] === "ZP04" || categoriasOrigen[i][0] === "ZP05" || categoriasOrigen[i][0] === "ZP06" || categoriasOrigen[i][0] === "ZP08") {
+      } else if (
+        categoriasOrigen[i][0] === "ZP03" ||
+        categoriasOrigen[i][0] === "ZP04" ||
+        categoriasOrigen[i][0] === "ZP05" ||
+        categoriasOrigen[i][0] === "ZP06" ||
+        categoriasOrigen[i][0] === "ZP08"
+      ) {
         hojaDestino.getRange(filaInicioDestino + i, 3).setValue("Secundario");
       }
     }
@@ -164,10 +180,19 @@ function copyDataFromVT12File() {
     hojaDestino.getRange(filaInicioDestino, 19, numRows, 1).setValues(bOrigen);
     hojaDestino.getRange(filaInicioDestino, 12, numRows, 1).setValues(avOrigen);
     hojaDestino.getRange(filaInicioDestino, 21, numRows, 1).setValues(hOrigen);
+
+    // Verificar si hay datos en las columnas O, P o Q y colocar 1 o 0 en la columna V del destino
+    var datosVerificados = [];
+    for (var i = 0; i < oOrigen.length; i++) {
+      var valorV = oOrigen[i][0] || pOrigen[i][0] || qOrigen[i][0] ? 1 : 0;
+      datosVerificados.push([valorV]);
+    }
+    hojaDestino.getRange(filaInicioDestino, 22, numRows, 1).setValues(datosVerificados);
   } else {
     Logger.log("¡No se encontró el archivo de origen!");
   }
 }
+
 
 //Funcion para calcular el mes perteneciente al nombre del Excel
 function fetchLastMonth() {
@@ -221,6 +246,14 @@ function removeSpecificRows (){
 
 
 function completeTableFields () {
+  //Llamar a la función typeBelongs "Tipo de Flota o Pertenencia (Dice si es Propio o Contratado)"
+  typeBelongs();
+  // Llamar a la función findTypeTransportation
+  findTypeTransportation();
+  
+}
+
+function typeBelongs () {
   // ID del archivo en el que se trabajarán los datos
   var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
   
@@ -238,12 +271,10 @@ function completeTableFields () {
     var valorR = valorQ === "JPO336" ? "Propio" : valorQ ? "Tercerizado" : "";
     hojaDestino.getRange(18 + i, 18).setValue(valorR);
   }
-
-  // Llamar a la función findTransportation
-  findTransportation();
 }
 
-function findTransportation() {
+//Funcion que con los pesos Dice que tipo de Vehiculo es "Sencillo, Turbo, TM 2 Ejes, TM 3 Ejes, etc"
+function findTypeTransportation() {
   var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
   
   var archivoDestino = SpreadsheetApp.openById(idArchivo);
