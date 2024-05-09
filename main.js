@@ -2,10 +2,10 @@
 function onOpen() {
     const ui = SpreadsheetApp.getUi();
     ui.createMenu('🤖❗ Menú de Parametros')
-      .addItem('🔔- Importar Excel y Convertir', 'importLocal')
-      .addItem('📄➔📄- Copiar Datos de VT12', 'copyDataFromVT12File')
-      .addItem('❌✅ - Eliminar Filas por Condiciones', 'removeSpecificRows')
-      .addItem('Depurar Base de Datos', '')
+      .addItem('🔔- 1.) Importar Excel y Convertir', 'importLocal')
+      .addItem('📄➔📄- 2.) Copiar Datos de VT12', 'copyDataFromVT12File')
+      .addItem('❌✅ - 3.) Eliminar Filas por Condiciones', 'removeSpecificRows')
+      .addItem('➕ - 4.) Completar Campos Faltantes', 'completeTableFields')
       .addItem('❎🗑- Limpiar Todo', 'confirmClearData')
       .addToUi();
 }
@@ -220,3 +220,57 @@ function removeSpecificRows (){
 }
 
 
+function completeTableFields () {
+  // ID del archivo en el que se trabajarán los datos
+  var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
+  
+  // Abrir el archivo de destino
+  var archivoDestino = SpreadsheetApp.openById(idArchivo);
+  var hojaDestino = archivoDestino.getSheetByName("Carga");
+
+  // Obtener los datos de la hoja
+  var datos = hojaDestino.getRange("Q18:Q").getValues();
+  var numRows = datos.length;
+  
+  // Recorrer los datos
+  for (var i = 0; i < numRows; i++) {
+    var valorQ = datos[i][0];
+    var valorR = valorQ === "JPO336" ? "Propio" : valorQ ? "Tercerizado" : "";
+    hojaDestino.getRange(18 + i, 18).setValue(valorR);
+  }
+
+  // Llamar a la función findTransportation
+  findTransportation();
+}
+
+function findTransportation() {
+  var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
+  
+  var archivoDestino = SpreadsheetApp.openById(idArchivo);
+  var hojaDestino = archivoDestino.getSheetByName("Carga");
+
+  // Obtener los datos de la column L
+  var datosL = hojaDestino.getRange("L18:L").getValues();
+  var numRows = datosL.length;
+  
+  for (var i = 0; i < numRows; i++) {
+    var valorL = datosL[i][0];
+
+    // Determinar el tipo de vehículo según el valor en la columna L
+    var tipoVehiculo = "";
+    if (valorL >= 1 && valorL <= 4500) {
+      tipoVehiculo = "TB Turbo";
+    } else if (valorL >= 4501 && valorL <= 9000) {
+      tipoVehiculo = "SC Sencillo";
+    } else if (valorL >= 9001 && valorL <= 18000) {
+      tipoVehiculo = "DT Dobletroque";
+    } else if (valorL >= 18001 && valorL <= 30000) {
+      tipoVehiculo = "TM2 Tractomula 2 ejes";
+    } else if (valorL > 30000) {
+      tipoVehiculo = "TM3 Tractomula 3 ejes";
+    }
+
+    // Colocar el tipo de vehículo en la columna M
+    hojaDestino.getRange(18 + i, 13).setValue(tipoVehiculo);
+  }
+}
