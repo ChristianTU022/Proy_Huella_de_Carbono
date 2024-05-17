@@ -269,6 +269,10 @@ function completeTableFields () {
   findTypeTransportation();
   //Llamar a la funcion amountOfFuelPerTrip para determinar la cantidad de Combustible por Viaje (gal/viaje)
   amountOfFuelPerTrip();
+  //Llama a la funcion originDestinRoute, la cual encuentra la ciudad y origen de destino
+  originDestinRoute();
+  //Llama a la funcion ,la cual calcula el Rendimiento por Viaje (Km/Gal)
+  calculateFuelEfficiency();
   //Llamar a la funcion searchNITTransporter, la cual busca el NIT de la Transportadora
   searchNITTransporter();
   //Llamar a la funcion clearColumnsSTUV, la cual despues de llenar todo borra los datos temporales de la columna S, T, U y V
@@ -440,4 +444,93 @@ function clearColumnsSTUV() {
 
   // Limpiar el contenido de las celdas en el rango especificado
   rangoSTUV.clearContent();
+}
+
+//Funcion para obtener la ciudad y departamento, Origen,Destino y Distancia en Km
+function originDestinRoute() {
+  // ID del archivo en el que se trabajarán los datos
+  var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
+
+  // Abrir el archivo de destino y obtener las hojas
+  var archivoDestino = SpreadsheetApp.openById(idArchivo);
+  var hojaCarga = archivoDestino.getSheetByName("Carga");
+  var hojaKmTipoTransporte = archivoDestino.getSheetByName("Km-Tipo Transporte");
+
+  // Obtener los datos de las columnas S en la hoja de "Carga"
+  var datosCarga = hojaCarga.getRange("S18:S").getValues();
+  //Logger.log("Datos de la columna S en 'Carga': " + JSON.stringify(datosCarga));
+  var numRows = datosCarga.length;
+
+  // Obtener los datos de la columna A en la hoja de "Km-Tipo Transporte"
+  var datosKmTipoTransporte = hojaKmTipoTransporte.getRange("A2:A").getValues();
+  //Logger.log("Datos de la columna A en 'Km-Tipo Transporte': " + JSON.stringify(datosKmTipoTransporte));
+
+  // Recorrer los datos
+  for (var i = 0; i < numRows; i++) {
+    var valorS = datosCarga[i][0].toString().trim();
+    //Logger.log("Valor de S en la fila " + (18 + i) + ": " + valorS);
+    
+    // Buscar el valor en la hoja de "Km-Tipo Transporte"
+    var index = -1;
+    for (var j = 0; j < datosKmTipoTransporte.length; j++) {
+      var valorA = datosKmTipoTransporte[j][0].toString().trim();
+      if (valorA === valorS) {
+        index = j;
+        break;
+      }
+    }
+    //Logger.log("Índice encontrado: " + index);
+
+    // Si se encuentra el valor, copiar los valores de las columnas B, C, D, E y F y pegarlos en la hoja de "Carga"
+    if (index !== -1) {
+      var valorB = hojaKmTipoTransporte.getRange(index + 2, 2).getValue(); // +2 para ajustar al índice base 1 y salto de encabezado
+      var valorC = hojaKmTipoTransporte.getRange(index + 2, 3).getValue(); // +2 para ajustar al índice base 1 y salto de encabezado
+      var valorD = hojaKmTipoTransporte.getRange(index + 2, 4).getValue(); // +2 para ajustar al índice base 1 y salto de encabezado
+      var valorE = hojaKmTipoTransporte.getRange(index + 2, 5).getValue(); // +2 para ajustar al índice base 1 y salto de encabezado
+      var valorF = hojaKmTipoTransporte.getRange(index + 2, 6).getValue(); // +2 para ajustar al índice base 1 y salto de encabezado
+      //Logger.log("Valor B: " + valorB + ", Valor C: " + valorC + ", Valor D: " + valorD + ", Valor E: " + valorE + ", Valor F: " + valorF);
+      
+      hojaCarga.getRange(18 + i, 7).setValue(valorB); // Colocar en la columna G de la hoja de "Carga"
+      hojaCarga.getRange(18 + i, 8).setValue(valorC); // Colocar en la columna H de la hoja de "Carga"
+      hojaCarga.getRange(18 + i, 9).setValue(valorD); // Colocar en la columna I de la hoja de "Carga"
+      hojaCarga.getRange(18 + i, 10).setValue(valorE); // Colocar en la columna J de la hoja de "Carga"
+      hojaCarga.getRange(18 + i, 11).setValue(valorF); // Colocar en la columna K de la hoja de "Carga"
+    }
+  }
+}
+
+//Funcion para calcular el Rendimiento de Combustible por Viaje (KM/Galon)
+//Operacion: Distancia recorrida por viaje/ Cantidad de Combustible por Viaje
+function calculateFuelEfficiency() {
+  // ID del archivo en el que se trabajarán los datos
+  var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
+  
+  // Abrir el archivo de destino y obtener la hoja "Carga"
+  var archivoDestino = SpreadsheetApp.openById(idArchivo);
+  var hojaCarga = archivoDestino.getSheetByName("Carga");
+
+  // Obtener los datos de las columnas K y O desde la fila 18 en adelante
+  var datosDistancia = hojaCarga.getRange("K18:K").getValues(); // Distancia recorrida por viaje
+  var datosCombustible = hojaCarga.getRange("O18:O").getValues(); // Cantidad de combustible por viaje
+  var numRows = datosDistancia.length;
+
+  // Crear un array para almacenar los resultados del rendimiento de combustible
+  var resultados = [];
+
+  // Recorrer los datos y realizar la división (KM/Galón)
+  for (var i = 0; i < numRows; i++) {
+    var distancia = datosDistancia[i][0];
+    var combustible = datosCombustible[i][0];
+
+    // Si alguno de los valores es nulo o vacío, dejar la celda vacía
+    if (distancia === "" || combustible === "" || distancia === null || combustible === null) {
+      resultados.push([""]);
+    } else {
+      var rendimiento = (combustible !== 0) ? distancia / combustible : 0; // Evitar división por cero
+      resultados.push([rendimiento]);
+    }
+  }
+
+  // Pegar los resultados en la columna P desde la fila 18 en adelante
+  hojaCarga.getRange(18, 16, numRows, 1).setValues(resultados);
 }
