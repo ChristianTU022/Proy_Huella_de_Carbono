@@ -263,20 +263,39 @@ function removeSpecificRows (){
 
 
 function completeTableFields () {
+  //Llamar a la función getNumberOfRowsWithData que obtiene el numero total de filas
+  var numRows = getNumberOfRowsWithData();
   //Llamar a la función typeOfBelongingAndFuel "Tipo de Flota o Pertenencia (Dice si es Propio o Contratado)"
   typeOfBelongingAndFuel();
   // Llamar a la función findTypeTransportation para determinar el tipo de transporte que se uso. (SC Sencillo,TB Turbo, TM2 Tractomula 2 ejes, DT Dobletroque, etc)
-  findTypeTransportation();
+  findTypeTransportation(numRows);
   //Llamar a la funcion amountOfFuelPerTrip para determinar la cantidad de Combustible por Viaje (gal/viaje)
-  amountOfFuelPerTrip();
-  //Llama a la funcion originDestinRoute, la cual encuentra la ciudad y origen de destino
-  originDestinRoute();
-  //Llama a la funcion ,la cual calcula el Rendimiento por Viaje (Km/Gal)
-  calculateFuelEfficiency();
-  //Llamar a la funcion searchNITTransporter, la cual busca el NIT de la Transportadora
-  searchNITTransporter();
-  //Llamar a la funcion clearColumnsSTUV, la cual despues de llenar todo borra los datos temporales de la columna S, T, U y V
-  clearColumnsSTUV();
+  // amountOfFuelPerTrip();
+  // //Llama a la funcion originDestinRoute, la cual encuentra la ciudad y origen de destino
+  // originDestinRoute();
+  // //Llama a la funcion ,la cual calcula el Rendimiento por Viaje (Km/Gal)
+  // calculateFuelEfficiency();
+  // //Llamar a la funcion searchNITTransporter, la cual busca el NIT de la Transportadora
+  // searchNITTransporter();
+  // //Llamar a la funcion clearColumnsSTUV, la cual despues de llenar todo borra los datos temporales de la columna S, T, U y V
+  // clearColumnsSTUV();
+}
+
+//Funcion para saber el numero de filas para romper los ciclos al buscar la informacion
+function getNumberOfRowsWithData() {
+  var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
+  
+  var archivoDestino = SpreadsheetApp.openById(idArchivo);
+  var hojaDestino = archivoDestino.getSheetByName("Carga");
+
+  // Obtener el rango de la columna B desde la fila 18
+  var datosB = hojaDestino.getRange("B18:B").getValues();
+  
+  // Calcular el número de filas con datos en la columna B
+  var numRows = datosB.filter(String).length;
+  Logger.log("Número de filas con datos: " + numRows);
+
+  return numRows;
 }
 
 //Funcion para saber si el transporte es propio o contratado y el tipo de Combustible
@@ -313,15 +332,14 @@ function typeOfBelongingAndFuel () {
 }
 
 //Funcion que con los pesos Dice que tipo de Vehiculo es "Sencillo, Turbo, TM 2 Ejes, TM 3 Ejes, etc"
-function findTypeTransportation() {
+function findTypeTransportation(numRows) {
   var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
   
   var archivoDestino = SpreadsheetApp.openById(idArchivo);
   var hojaDestino = archivoDestino.getSheetByName("Carga");
 
-  // Obtener los datos de la column L
-  var datosL = hojaDestino.getRange("L18:L").getValues();
-  var numRows = datosL.length;
+  // Obtener los datos de la columna L desde la fila 18 hasta el número de filas con datos
+  var datosL = hojaDestino.getRange(18, 12, numRows, 1).getValues();
   
   for (var i = 0; i < numRows; i++) {
     var valorL = datosL[i][0];
