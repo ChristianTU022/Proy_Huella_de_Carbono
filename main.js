@@ -270,13 +270,13 @@ function completeTableFields () {
   // Llamar a la función findTypeTransportation para determinar el tipo de transporte que se uso. (SC Sencillo,TB Turbo, TM2 Tractomula 2 ejes, DT Dobletroque, etc)
   findTypeTransportation(numRows);
   //Llamar a la funcion amountOfFuelPerTrip para determinar la cantidad de Combustible por Viaje (gal/viaje)
-  // amountOfFuelPerTrip();
-  // //Llama a la funcion originDestinRoute, la cual encuentra la ciudad y origen de destino
-  // originDestinRoute();
-  // //Llama a la funcion ,la cual calcula el Rendimiento por Viaje (Km/Gal)
-  // calculateFuelEfficiency();
-  // //Llamar a la funcion searchNITTransporter, la cual busca el NIT de la Transportadora
-  // searchNITTransporter();
+  amountOfFuelPerTrip();
+  //Llama a la funcion originDestinRoute, la cual encuentra la ciudad y origen de destino
+  //originDestinRoute();
+  //Llama a la funcion ,la cual calcula el Rendimiento por Viaje (Km/Gal)
+  //calculateFuelEfficiency();
+  //Llamar a la funcion searchNITTransporter, la cual busca el NIT de la Transportadora
+  searchNITTransporter(numRows);
   // //Llamar a la funcion clearColumnsSTUV, la cual despues de llenar todo borra los datos temporales de la columna S, T, U y V
   // clearColumnsSTUV();
 }
@@ -372,7 +372,7 @@ function findTypeTransportation(numRows) {
 }
 
 // Esta funcion busca el NIT de la transportadora por su nombre
-function searchNITTransporter() {
+function searchNITTransporter(numRows) {
   var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
 
   // Abrir el archivo de destino y obtener las hojas
@@ -381,15 +381,16 @@ function searchNITTransporter() {
   var hojaTransportadoras = archivoDestino.getSheetByName("TRANSPORTADORAS");
 
   // Obtener los datos de las columnas D en la hoja de "Carga"
-  var datosCarga = hojaCarga.getRange("D18:D").getValues();
-  var numRows = datosCarga.length;
+  var datosCarga = hojaCarga.getRange(18, 4, numRows, 1).getValues();
 
+  // Obtener los datos de las columnas B en la hoja de "TRANSPORTADORAS"
+  var datosTransportadoras = hojaTransportadoras.getRange("B:B").getValues();
+  
   // Recorrer los datos
   for (var i = 0; i < numRows; i++) {
     var valorD = datosCarga[i][0];
     
     // Buscar el valor en la hoja de "TRANSPORTADORAS"
-    var datosTransportadoras = hojaTransportadoras.getRange("B:B").getValues();
     var index = datosTransportadoras.findIndex(function(row) {
       return row[0] === valorD;
     });
