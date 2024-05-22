@@ -52,16 +52,19 @@ function convertExcel_to_GoogleSheets(){
 
 //Funcion para Conectarse al Sheet
 function conectionSheets() {
-    //Conectar Sheets a AppScript
-   const sheetId = '19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA';
-   const sheet = SpreadsheetApp.openById(sheetId);
-    //Conectar Hojas especificas
-   const p_Carga = sheet.getSheetByName('Carga');
-   const p_Transportadoras = sheet.getSheetByName('TRANSPORTADORAS');
-   const p_Km_TipoTransporte = sheet.getSheetByName('Km-Tipo Transporte');
-   
-   return {sheet, p_Carga, p_Transportadoras, p_Km_TipoTransporte};
+  // Conectar Sheets a AppScript
+  const sheetId = '19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA';
+  const sheet = SpreadsheetApp.openById(sheetId);
+  
+  // Retornar hojas específicas
+  return {
+      sheet,
+      p_Carga: sheet.getSheetByName('Carga'),
+      p_Transportadoras: sheet.getSheetByName('TRANSPORTADORAS'),
+      p_Km_TipoTransporte: sheet.getSheetByName('Km-Tipo Transporte')
+  };
 }
+
 
 //Funcion Para Confirmar Limpieza de Datos
 function confirmAndCleanData(sheetName, confirmationMessage, lastColumn) {
@@ -93,65 +96,64 @@ function copyDataFromVT12File() {
   var mesAnterior = fetchLastMonth(); // Obtener el mes anterior
   var currentYear = fechaActual.getFullYear(); // Obtener el año actual
   var nombreArchivoOrigen = "[GSheets-]VT12 " + mesAnterior + " " + currentYear;
-  
+
   // Datos del Archivo Destino
-  var idArchivoDestino = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
-  var nombreHojaDestino = "Carga";
   var filaInicioDestino = 18;
+
+  // Obtener las hojas específicas
+  const { p_Carga } = conectionSheets();
 
   var archivosOrigen = DriveApp.getFilesByName(nombreArchivoOrigen);
   if (archivosOrigen.hasNext()) {
-    var archivoOrigen = archivosOrigen.next();
-    var hojaOrigen = SpreadsheetApp.openById(archivoOrigen.getId()).getSheetByName("Hoja1");
-    var datosOrigen = hojaOrigen.getDataRange().getValues().slice(1); // Saltar la primera fila
+      var archivoOrigen = archivosOrigen.next();
+      var hojaOrigen = SpreadsheetApp.openById(archivoOrigen.getId()).getSheetByName("Hoja1");
+      var datosOrigen = hojaOrigen.getDataRange().getValues().slice(1); // Saltar la primera fila
 
-    // Filtrar los datos de la columna B que no comiencen por "580"
-    var datosFiltrados = datosOrigen.filter(function(fila) {
-      return !fila[1] || fila[1].toString().indexOf("580") !== 0;
-    });
+      // Filtrar los datos de la columna B que no comiencen por "580"
+      var datosFiltrados = datosOrigen.filter(function (fila) {
+          return !fila[1] || fila[1].toString().indexOf("580") !== 0;
+      });
 
-    // Calcular la cantidad de filas de datos a copiar
-    var numRows = datosFiltrados.length;
+      // Calcular la cantidad de filas de datos a copiar
+      var numRows = datosFiltrados.length;
 
-    // Acceder al archivo de destino
-    var archivoDestino = SpreadsheetApp.openById(idArchivoDestino);
-    var hojaDestino = archivoDestino.getSheetByName(nombreHojaDestino);
+      // Pegar los datos en la hoja de destino
+      p_Carga.getRange(filaInicioDestino, 2, numRows, 1).setValues(datosFiltrados.map(function (fila) { return [fila[0]]; }));
 
-    // Pegar los datos en la hoja de destino
-    hojaDestino.getRange(filaInicioDestino, 2, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[0]]; }));
+      // Agregar "Pastas" en la columna A y "Seco" en la columna F
+      p_Carga.getRange(filaInicioDestino, 1, numRows, 1).setValue("Pastas");
+      p_Carga.getRange(filaInicioDestino, 6, numRows, 1).setValue("Seco");
 
-    // Agregar "Pastas" en la columna A y "Seco" en la columna F
-    hojaDestino.getRange(filaInicioDestino, 1, numRows, 1).setValue("Pastas");
-    hojaDestino.getRange(filaInicioDestino, 6, numRows, 1).setValue("Seco");
+      // Verificar las categorías y colocar "Primario" o "Secundario" en la columna C
+      p_Carga.getRange(filaInicioDestino, 3, numRows, 1).setValues(datosFiltrados.map(function (fila) {
+          if (["ZP01", "ZP02", "ZP07"].includes(fila[12])) {
+              return ["Primario"];
+          } else if (["ZP03", "ZP04", "ZP05", "ZP06", "ZP08"].includes(fila[12])) {
+              return ["Secundario"];
+          } else {
+              return [""];
+          }
+      }));
 
-    // Verificar las categorías y colocar "Primario" o "Secundario" en la columna C
-    hojaDestino.getRange(filaInicioDestino, 3, numRows, 1).setValues(datosFiltrados.map(function(fila) {
-      if (["ZP01", "ZP02", "ZP07"].includes(fila[12])) {
-        return ["Primario"];
-      } else if (["ZP03", "ZP04", "ZP05", "ZP06", "ZP08"].includes(fila[12])) {
-        return ["Secundario"];
-      } else {
-        return [""];
-      }
-    }));
+      // Copiar datos adicionales del archivo de origen al archivo de destino
+      p_Carga.getRange(filaInicioDestino, 17, numRows, 1).setValues(datosFiltrados.map(function (fila) { return [fila[28]]; }));
+      p_Carga.getRange(filaInicioDestino, 4, numRows, 1).setValues(datosFiltrados.map(function (fila) { return [fila[5]]; }));
+      p_Carga.getRange(filaInicioDestino, 5, numRows, 1).setValues(datosFiltrados.map(function (fila) { return [fila[23]]; }));
+      p_Carga.getRange(filaInicioDestino, 20, numRows, 1).setValues(datosFiltrados.map(function (fila) { return [fila[11]]; }));
+      p_Carga.getRange(filaInicioDestino, 19, numRows, 1).setValues(datosFiltrados.map(function (fila) { return [fila[1]]; }));
+      p_Carga.getRange(filaInicioDestino, 12, numRows, 1).setValues(datosFiltrados.map(function (fila) { return [fila[47]]; }));
+      p_Carga.getRange(filaInicioDestino, 21, numRows, 1).setValues(datosFiltrados.map(function (fila) { return [fila[7]]; })); // Columna U del archivo origen
 
-    // Copiar datos adicionales del archivo de origen al archivo de destino
-    hojaDestino.getRange(filaInicioDestino, 17, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[28]]; }));
-    hojaDestino.getRange(filaInicioDestino, 4, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[5]]; }));
-    hojaDestino.getRange(filaInicioDestino, 5, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[23]]; }));
-    hojaDestino.getRange(filaInicioDestino, 20, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[11]]; }));
-    hojaDestino.getRange(filaInicioDestino, 19, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[1]]; }));
-    hojaDestino.getRange(filaInicioDestino, 12, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[47]]; }));
-    hojaDestino.getRange(filaInicioDestino, 21, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[7]]; })); // Columna U del archivo origen
-
-    // Verificar si hay datos en las columnas O, P o Q y colocar 1 o 0 en la columna V del destino
-    hojaDestino.getRange(filaInicioDestino, 22, numRows, 1).setValues(datosFiltrados.map(function(fila) {
-      return [(fila[14] || fila[15] || fila[16] || fila[17] || fila[18] || fila[19] || fila[20] || fila[21]) ? 1 : 0];
-    }));
+      // Verificar si hay datos en las columnas O, P o Q y colocar 1 o 0 en la columna V del destino
+      p_Carga.getRange(filaInicioDestino, 22, numRows, 1).setValues(datosFiltrados.map(function (fila) {
+          return [(fila[14] || fila[15] || fila[16] || fila[17] || fila[18] || fila[19] || fila[20] || fila[21]) ? 1 : 0];
+      }));
   } else {
-    Logger.log("¡No se encontró el archivo de origen!");
+      Logger.log("¡No se encontró el archivo de origen!");
   }
 }
+
+
 
 
 
@@ -206,7 +208,7 @@ function removeSpecificRows() {
   });
 }
 
-
+//Funcion relacionada al Boton con el fin de llamar otras funciones
 function completeTableFields () {
   //Llamar a la función getNumberOfRowsWithData que obtiene el numero total de filas
   var numRows = getNumberOfRowsWithData();
