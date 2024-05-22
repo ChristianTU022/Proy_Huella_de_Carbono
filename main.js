@@ -88,122 +88,71 @@ function confirmClearData() {
 }
 
 function copyDataFromVT12File() {
-  //Datos del Archivo Origen
+  // Datos del Archivo Origen
   var fechaActual = new Date();
   var mesAnterior = fetchLastMonth(); // Obtener el mes anterior
   var currentYear = fechaActual.getFullYear(); // Obtener el año actual
   var nombreArchivoOrigen = "[GSheets-]VT12 " + mesAnterior + " " + currentYear;
-  //Logger.log(nombreArchivoOrigen);
-  var nombreHojaOrigen = "Hoja1";
-  var rangoDatosOrigen = "A2:A";
-  var rangoCategoriasOrigen = "M2:M";
-  var rangoACOrigen = "AC2:AC";
-  var rangoFOrigen = "F2:F";
-  var rangoXOrigen = "X2:X";
-  var rangoLOrigen = "L2:L";
-  var rangoBOrigen = "B2:B";
-  var rangoAVOrigen = "AV2:AV";
-  var rangoHOrigen = "H2:H";
-  var rangoOOrigen = "O2:O";
-  var rangoPOrigen = "P2:P";
-  var rangoQOrigen = "Q2:Q";
-  var rangoROrigen = "R2:R";
-  var rangoSOrigen = "S2:S";
-  var rangoTOrigen = "T2:T";
-  var rangoUOrigen = "U2:U";
-  var rangoVOrigen = "V2:V";
-
-  //Datos del Archivo Destino
+  
+  // Datos del Archivo Destino
   var idArchivoDestino = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
   var nombreHojaDestino = "Carga";
   var filaInicioDestino = 18;
-  var columnaDestino = 2;
 
   var archivosOrigen = DriveApp.getFilesByName(nombreArchivoOrigen);
   if (archivosOrigen.hasNext()) {
     var archivoOrigen = archivosOrigen.next();
-    var hojaOrigen = SpreadsheetApp.openById(archivoOrigen.getId()).getSheetByName(nombreHojaOrigen);
-    var datosOrigen = hojaOrigen.getRange(rangoDatosOrigen).getValues();
-    var categoriasOrigen = hojaOrigen.getRange(rangoCategoriasOrigen).getValues();
-    var acOrigen = hojaOrigen.getRange(rangoACOrigen).getValues();
-    var fOrigen = hojaOrigen.getRange(rangoFOrigen).getValues();
-    var xOrigen = hojaOrigen.getRange(rangoXOrigen).getValues();
-    var lOrigen = hojaOrigen.getRange(rangoLOrigen).getValues();
-    var bOrigen = hojaOrigen.getRange(rangoBOrigen).getValues();
-    var avOrigen = hojaOrigen.getRange(rangoAVOrigen).getValues();
-    var hOrigen = hojaOrigen.getRange(rangoHOrigen).getValues();
-    var oOrigen = hojaOrigen.getRange(rangoOOrigen).getValues();
-    var pOrigen = hojaOrigen.getRange(rangoPOrigen).getValues();
-    var qOrigen = hojaOrigen.getRange(rangoQOrigen).getValues();
-    var rOrigen = hojaOrigen.getRange(rangoROrigen).getValues();
-    var sOrigen = hojaOrigen.getRange(rangoSOrigen).getValues();
-    var tOrigen = hojaOrigen.getRange(rangoTOrigen).getValues();
-    var uOrigen = hojaOrigen.getRange(rangoUOrigen).getValues();
-    var vOrigen = hojaOrigen.getRange(rangoVOrigen).getValues();
+    var hojaOrigen = SpreadsheetApp.openById(archivoOrigen.getId()).getSheetByName("Hoja1");
+    var datosOrigen = hojaOrigen.getDataRange().getValues().slice(1); // Saltar la primera fila
+
+    // Filtrar los datos de la columna B que no comiencen por "580"
+    var datosFiltrados = datosOrigen.filter(function(fila) {
+      return !fila[1] || fila[1].toString().indexOf("580") !== 0;
+    });
+
+    // Calcular la cantidad de filas de datos a copiar
+    var numRows = datosFiltrados.length;
 
     // Acceder al archivo de destino
     var archivoDestino = SpreadsheetApp.openById(idArchivoDestino);
     var hojaDestino = archivoDestino.getSheetByName(nombreHojaDestino);
 
-    // Filtrar los datos de la columna B que no comiencen por "580"
-    var datosFiltrados = [];
-    for (var i = 0; i < bOrigen.length; i++) {
-      if (!bOrigen[i][0] || bOrigen[i][0].toString().indexOf("580") !== 0) {
-        datosFiltrados.push(datosOrigen[i]);
-      }
-    }
-
-    // Calcular la cantidad de filas de datos a copiar
-    var numRows = datosFiltrados.length;
-
     // Pegar los datos en la hoja de destino
-    hojaDestino.getRange(filaInicioDestino, columnaDestino, numRows, 1).setValues(datosFiltrados);
+    hojaDestino.getRange(filaInicioDestino, 2, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[0]]; }));
 
     // Agregar "Pastas" en la columna A y "Seco" en la columna F
     hojaDestino.getRange(filaInicioDestino, 1, numRows, 1).setValue("Pastas");
     hojaDestino.getRange(filaInicioDestino, 6, numRows, 1).setValue("Seco");
 
     // Verificar las categorías y colocar "Primario" o "Secundario" en la columna C
-    for (var i = 0; i < categoriasOrigen.length; i++) {
-      if (
-        categoriasOrigen[i][0] === "ZP01" ||
-        categoriasOrigen[i][0] === "ZP02" ||
-        categoriasOrigen[i][0] === "ZP07"
-      ) {
-        hojaDestino.getRange(filaInicioDestino + i, 3).setValue("Primario");
-      } else if (
-        categoriasOrigen[i][0] === "ZP03" ||
-        categoriasOrigen[i][0] === "ZP04" ||
-        categoriasOrigen[i][0] === "ZP05" ||
-        categoriasOrigen[i][0] === "ZP06" ||
-        categoriasOrigen[i][0] === "ZP08"
-      ) {
-        hojaDestino.getRange(filaInicioDestino + i, 3).setValue("Secundario");
+    hojaDestino.getRange(filaInicioDestino, 3, numRows, 1).setValues(datosFiltrados.map(function(fila) {
+      if (["ZP01", "ZP02", "ZP07"].includes(fila[12])) {
+        return ["Primario"];
+      } else if (["ZP03", "ZP04", "ZP05", "ZP06", "ZP08"].includes(fila[12])) {
+        return ["Secundario"];
+      } else {
+        return [""];
       }
-    }
+    }));
 
     // Copiar datos adicionales del archivo de origen al archivo de destino
-    hojaDestino.getRange(filaInicioDestino, 17, numRows, 1).setValues(acOrigen);
-    hojaDestino.getRange(filaInicioDestino, 4, numRows, 1).setValues(fOrigen);
-    hojaDestino.getRange(filaInicioDestino, 5, numRows, 1).setValues(xOrigen);
-    hojaDestino.getRange(filaInicioDestino, 20, numRows, 1).setValues(lOrigen);
-    hojaDestino.getRange(filaInicioDestino, 19, numRows, 1).setValues(bOrigen);
-    hojaDestino.getRange(filaInicioDestino, 12, numRows, 1).setValues(avOrigen);
-    hojaDestino.getRange(filaInicioDestino, 21, numRows, 1).setValues(hOrigen);
+    hojaDestino.getRange(filaInicioDestino, 17, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[28]]; }));
+    hojaDestino.getRange(filaInicioDestino, 4, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[5]]; }));
+    hojaDestino.getRange(filaInicioDestino, 5, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[23]]; }));
+    hojaDestino.getRange(filaInicioDestino, 20, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[11]]; }));
+    hojaDestino.getRange(filaInicioDestino, 19, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[1]]; }));
+    hojaDestino.getRange(filaInicioDestino, 12, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[47]]; }));
+    hojaDestino.getRange(filaInicioDestino, 21, numRows, 1).setValues(datosFiltrados.map(function(fila) { return [fila[7]]; })); // Columna U del archivo origen
 
     // Verificar si hay datos en las columnas O, P o Q y colocar 1 o 0 en la columna V del destino
-    var datosVerificados = [];
-    for (var i = 0; i < oOrigen.length; i++) {
-      var valorV = oOrigen[i][0] || pOrigen[i][0] || qOrigen[i][0] || 
-                  rOrigen[i][0] || sOrigen[i][0] || tOrigen[i][0] || 
-                  uOrigen[i][0] || vOrigen[i][0] ? 1 : 0;
-      datosVerificados.push([valorV]);
-    }
-    hojaDestino.getRange(filaInicioDestino, 22, numRows, 1).setValues(datosVerificados);
+    hojaDestino.getRange(filaInicioDestino, 22, numRows, 1).setValues(datosFiltrados.map(function(fila) {
+      return [(fila[14] || fila[15] || fila[16] || fila[17] || fila[18] || fila[19] || fila[20] || fila[21]) ? 1 : 0];
+    }));
   } else {
     Logger.log("¡No se encontró el archivo de origen!");
   }
 }
+
 
 
 //Funcion para calcular el mes perteneciente al nombre del Excel
@@ -224,41 +173,37 @@ function fetchLastMonth() {
 }
 
 //Funcion dedicada a eliminar las filas especificas que no se envian (Limpieza de la BD )
-function removeSpecificRows (){
- // ID del archivo en el que se trabajarán los datos
- var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
-  
- // Abrir el archivo de destino
- var archivoDestino = SpreadsheetApp.openById(idArchivo);
- var hojaDestino = archivoDestino.getSheetByName("Carga");
+function removeSpecificRows() {
+  // ID del archivo en el que se trabajarán los datos
+  var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
 
- // Obtener los datos de la hoja
- var datos = hojaDestino.getDataRange().getValues();
- 
- // Recorrer los datos desde la última fila hasta la primera
- for (var i = datos.length - 1; i >= 0; i--) {
-   var fila = datos[i];
-   
-   // Eliminar filas que comiencen con "580" en la columna B
-   if (fila[1].toString().indexOf("580") === 0) {
-     hojaDestino.deleteRow(i + 1);
-   }
-   
-   // Eliminar filas donde el valor en la columna S sea "PINTER"
-   if (fila[18].toString() === "PINTER") {
-     hojaDestino.deleteRow(i + 1);
-   }
-   
-   // Eliminar filas donde el valor en la columna T sea "DR11" o "DR15"
-   if (fila[19].toString() === "DR11" || fila[19].toString() === "DR15") {
-     hojaDestino.deleteRow(i + 1);
-   }
+  // Abrir el archivo de destino y obtener la hoja
+  var archivoDestino = SpreadsheetApp.openById(idArchivo);
+  var hojaDestino = archivoDestino.getSheetByName("Carga");
 
-   // Eliminar filas donde el valor en la columna V sea 0
-   if (fila[21] === 0) {
-    hojaDestino.deleteRow(i + 1);
-  }
- }
+  // Obtener los datos de la hoja
+  var datos = hojaDestino.getDataRange().getValues();
+
+  // Crear un arreglo para almacenar las filas a eliminar
+  var filasEliminar = [];
+
+  // Recorrer los datos para identificar las filas a eliminar
+  datos.forEach(function(fila, index) {
+    // Eliminar filas que cumplan con las condiciones
+    if (
+      fila[1].toString().indexOf("580") === 0 || // Comienza con "580" en la columna B
+      fila[18].toString() === "PINTER" || // Tiene "PINTER" en la columna S
+      fila[19].toString() === "DR11" || fila[19].toString() === "DR15" || // Tiene "DR11" o "DR15" en la columna T
+      fila[21] === 0 // Tiene 0 en la columna V
+    ) {
+      filasEliminar.push(index + 1); // Se agrega el índice de la fila para eliminarla
+    }
+  });
+
+  // Eliminar las filas del arreglo en orden inverso para evitar problemas de índices
+  filasEliminar.reverse().forEach(function(indice) {
+    hojaDestino.deleteRow(indice);
+  });
 }
 
 
@@ -266,19 +211,19 @@ function completeTableFields () {
   //Llamar a la función getNumberOfRowsWithData que obtiene el numero total de filas
   var numRows = getNumberOfRowsWithData();
   //Llamar a la función typeOfBelongingAndFuel "Tipo de Flota o Pertenencia (Dice si es Propio o Contratado)"
-  typeOfBelongingAndFuel();
+  typeOfBelongingAndFuel(numRows);
   // Llamar a la función findTypeTransportation para determinar el tipo de transporte que se uso. (SC Sencillo,TB Turbo, TM2 Tractomula 2 ejes, DT Dobletroque, etc)
   findTypeTransportation(numRows);
   //Llamar a la funcion amountOfFuelPerTrip para determinar la cantidad de Combustible por Viaje (gal/viaje)
-  amountOfFuelPerTrip();
+  amountOfFuelPerTrip(numRows);
   //Llama a la funcion originDestinRoute, la cual encuentra la ciudad y origen de destino
-  //originDestinRoute();
+  originDestinRoute(numRows);
   //Llama a la funcion ,la cual calcula el Rendimiento por Viaje (Km/Gal)
-  //calculateFuelEfficiency();
+  calculateFuelEfficiency(numRows);
   //Llamar a la funcion searchNITTransporter, la cual busca el NIT de la Transportadora
   searchNITTransporter(numRows);
   // //Llamar a la funcion clearColumnsSTUV, la cual despues de llenar todo borra los datos temporales de la columna S, T, U y V
-  // clearColumnsSTUV();
+  clearColumnsSTUV();
 }
 
 //Funcion para saber el numero de filas para romper los ciclos al buscar la informacion
@@ -299,50 +244,51 @@ function getNumberOfRowsWithData() {
 }
 
 //Funcion para saber si el transporte es propio o contratado y el tipo de Combustible
-function typeOfBelongingAndFuel () {
-  // ID del archivo en el que se trabajarán los datos
+function typeOfBelongingAndFuel(numRows) {
   var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
   
   // Abrir el archivo de destino
   var archivoDestino = SpreadsheetApp.openById(idArchivo);
   var hojaDestino = archivoDestino.getSheetByName("Carga");
 
-  // Obtener los datos de la hoja
-  var datos = hojaDestino.getRange("Q18:Q").getValues();
-  var numRows = datos.length;
+  // Obtener los datos de la columna Q desde la fila 18 hasta el número de filas con datos
+  var datosQ = hojaDestino.getRange(18, 17, numRows, 1).getValues(); // Columna Q
   
+  // Crear arrays para almacenar los resultados
+  var resultadosR = [];
+  var resultadosN = [];
+
   // Recorrer los datos
   for (var i = 0; i < numRows; i++) {
-    var valorQ = datos[i][0];
+    var valorQ = datosQ[i][0];
     var valorR = valorQ === "JPO336" ? "Propio" : valorQ ? "Tercerizado" : "";
-    
-    // Establecer el tipo de combustible según el valor de la pertenencia
-    var tipoCombustible = "";
-    if (valorR === "Propio") {
-      tipoCombustible = "Gas Natural";
-    } else if (valorR === "Tercerizado") {
-      tipoCombustible = "Diésel";
-    }
+    var tipoCombustible = valorR === "Propio" ? "Gas Natural" : valorR === "Tercerizado" ? "Diésel" : "";
 
-    // Colocar el tipo de pertenencia en la columna N
-    hojaDestino.getRange(18 + i, 14).setValue(tipoCombustible);
-    
-    hojaDestino.getRange(18 + i, 18).setValue(valorR);
+    // Almacenar los resultados en los arrays
+    resultadosR.push([valorR]);
+    resultadosN.push([tipoCombustible]);
   }
+
+  // Colocar el tipo de pertenencia en la columna R desde la fila 18 en adelante
+  hojaDestino.getRange(18, 18, numRows, 1).setValues(resultadosR); // Columna R (índice 18)
+  
+  // Colocar el tipo de combustible en la columna N desde la fila 18 en adelante
+  hojaDestino.getRange(18, 14, numRows, 1).setValues(resultadosN); // Columna N (índice 14)
 }
 
 //Funcion que con los pesos Dice que tipo de Vehiculo es "Sencillo, Turbo, TM 2 Ejes, TM 3 Ejes, etc"
 function findTypeTransportation(numRows) {
   var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
-  
   var archivoDestino = SpreadsheetApp.openById(idArchivo);
   var hojaDestino = archivoDestino.getSheetByName("Carga");
 
-  // Obtener los datos de la columna L desde la fila 18 hasta el número de filas con datos
-  var datosL = hojaDestino.getRange(18, 12, numRows, 1).getValues();
-  
+  // Obtener los datos de las columnas L y U desde la fila 18 hasta el número de filas con datos
+  var datos = hojaDestino.getRange(18, 12, numRows, 10).getValues(); // Columnas L hasta U
+  var resultados = [];
+
   for (var i = 0; i < numRows; i++) {
-    var valorL = datosL[i][0];
+    var valorL = datos[i][0];  // Columna L
+    var textoU = datos[i][9].toUpperCase();  // Columna U
 
     // Determinar el tipo de vehículo según el valor en la columna L
     var tipoVehiculo = "";
@@ -358,18 +304,19 @@ function findTypeTransportation(numRows) {
       tipoVehiculo = "TM3 Tractomula 3 ejes";
     }
 
-    // Obtener el texto de la columna U y convertirlo a mayúsculas
-    var textoU = hojaDestino.getRange(18 + i, 21).getValue().toUpperCase();
-
     // Verificar si el texto contiene "MINI"
     if (textoU.indexOf("MINI") !== -1) {
       tipoVehiculo = "MM Minimula";
     }
-     
-    // Colocar el tipo de vehículo en la columna M
-    hojaDestino.getRange(18 + i, 13).setValue(tipoVehiculo);
+
+    // Almacenar el tipo de vehículo en el array de resultados
+    resultados.push([tipoVehiculo]);
   }
+
+  // Colocar el tipo de vehículo en la columna M desde la fila 18 en adelante
+  hojaDestino.getRange(18, 13, numRows, 1).setValues(resultados);
 }
+
 
 // Esta funcion busca el NIT de la transportadora por su nombre
 function searchNITTransporter(numRows) {
@@ -383,28 +330,29 @@ function searchNITTransporter(numRows) {
   // Obtener los datos de las columnas D en la hoja de "Carga"
   var datosCarga = hojaCarga.getRange(18, 4, numRows, 1).getValues();
 
-  // Obtener los datos de las columnas B en la hoja de "TRANSPORTADORAS"
-  var datosTransportadoras = hojaTransportadoras.getRange("B:B").getValues();
-  
-  // Recorrer los datos
-  for (var i = 0; i < numRows; i++) {
-    var valorD = datosCarga[i][0];
-    
-    // Buscar el valor en la hoja de "TRANSPORTADORAS"
-    var index = datosTransportadoras.findIndex(function(row) {
-      return row[0] === valorD;
-    });
+  // Obtener los datos de las columnas B y C en la hoja de "TRANSPORTADORAS"
+  var datosTransportadoras = hojaTransportadoras.getRange(1, 2, hojaTransportadoras.getLastRow(), 2).getValues();
 
-    // Si se encuentra el valor, copiar el valor de la columna C y pegarlo en la hoja de "Carga"
-    if (index !== -1) {
-      var valorC = hojaTransportadoras.getRange(index + 1, 3).getValue(); // +1 para ajustar al índice base 1
-      hojaCarga.getRange(18 + i, 4).setValue(valorC); // Colocar en la columna D de la hoja de "Carga"
+  // Crear un objeto para mapear NITs a nombres de transportadoras
+  var mapaTransportadoras = {};
+  datosTransportadoras.forEach(function(fila) {
+    mapaTransportadoras[fila[0]] = fila[1];
+  });
+
+  // Recorrer los datos de carga y asignar el nombre de la transportadora si se encuentra el NIT
+  datosCarga.forEach(function(fila, index) {
+    var valorD = fila[0];
+    if (mapaTransportadoras.hasOwnProperty(valorD)) {
+      var valorC = mapaTransportadoras[valorD];
+      hojaCarga.getRange(18 + index, 4).setValue(valorC);
     }
-  }
+  });
 }
 
+
+
 // Esta funcion tiene el fin de decir cual es la cantidad de combustible por viaje (gal/viaje), con ayuda del Tipo de Vehiculo
-function amountOfFuelPerTrip() {
+function amountOfFuelPerTrip(numRows) {
   // ID del archivo en el que se trabajarán los datos
   var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
 
@@ -412,9 +360,11 @@ function amountOfFuelPerTrip() {
   var archivoDestino = SpreadsheetApp.openById(idArchivo);
   var hojaCarga = archivoDestino.getSheetByName("Carga");
 
-  // Obtener los datos de la columna M en la hoja de "Carga"
-  var datosM = hojaCarga.getRange("M18:M").getValues();
-  var numRows = datosM.length;
+  // Obtener los datos de la columna M desde la fila 18 hasta el número de filas con datos
+  var datosM = hojaCarga.getRange(18, 13, numRows, 1).getValues(); // Columna M
+
+  // Crear un array para almacenar los resultados
+  var resultadosO = [];
 
   // Recorrer los datos
   for (var i = 0; i < numRows; i++) {
@@ -445,10 +395,14 @@ function amountOfFuelPerTrip() {
         break;
     }
 
-    // Colocar el valor en la columna O de la fila actual
-    hojaCarga.getRange(18 + i, 15).setValue(valorO);
+    // Almacenar el resultado en el array
+    resultadosO.push([valorO]);
   }
+
+  // Colocar los valores en la columna O desde la fila 18 en adelante
+  hojaCarga.getRange(18, 15, numRows, 1).setValues(resultadosO); // Columna O (índice 15)
 }
+
 //Funcion para limpiar columnas STUV
 function clearColumnsSTUV() {
   // ID del archivo en el que se trabajarán los datos
@@ -458,15 +412,13 @@ function clearColumnsSTUV() {
   var archivoDestino = SpreadsheetApp.openById(idArchivo);
   var hojaCarga = archivoDestino.getSheetByName("Carga");
 
-  // Obtener el rango de las columnas S, T, U y V
-  var rangoSTUV = hojaCarga.getRange("S18:V");
-
-  // Limpiar el contenido de las celdas en el rango especificado
-  rangoSTUV.clearContent();
+  // Limpiar el contenido de las columnas S, T, U y V en la hoja "Carga"
+  hojaCarga.getRange("S18:V").clearContent();
 }
 
+
 //Funcion para obtener la ciudad y departamento, Origen,Destino y Distancia en Km
-function originDestinRoute() {
+function originDestinRoute(numRows) {
   // ID del archivo en el que se trabajarán los datos
   var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
 
@@ -475,52 +427,38 @@ function originDestinRoute() {
   var hojaCarga = archivoDestino.getSheetByName("Carga");
   var hojaKmTipoTransporte = archivoDestino.getSheetByName("Km-Tipo Transporte");
 
-  // Obtener los datos de las columnas S en la hoja de "Carga"
-  var datosCarga = hojaCarga.getRange("S18:S").getValues();
-  //Logger.log("Datos de la columna S en 'Carga': " + JSON.stringify(datosCarga));
-  var numRows = datosCarga.length;
+  // Obtener los datos de las columnas S en la hoja de "Carga" desde la fila 18 hasta el número de filas con datos
+  var datosCarga = hojaCarga.getRange(18, 19, numRows, 1).getValues().flat();
 
-  // Obtener los datos de la columna A en la hoja de "Km-Tipo Transporte"
-  var datosKmTipoTransporte = hojaKmTipoTransporte.getRange("A2:A").getValues();
-  //Logger.log("Datos de la columna A en 'Km-Tipo Transporte': " + JSON.stringify(datosKmTipoTransporte));
+  // Obtener los datos de la hoja "Km-Tipo Transporte"
+  var datosKmTipoTransporte = hojaKmTipoTransporte.getDataRange().getValues();
 
-  // Recorrer los datos
-  for (var i = 0; i < numRows; i++) {
-    var valorS = datosCarga[i][0].toString().trim();
-    //Logger.log("Valor de S en la fila " + (18 + i) + ": " + valorS);
-    
-    // Buscar el valor en la hoja de "Km-Tipo Transporte"
-    var index = -1;
-    for (var j = 0; j < datosKmTipoTransporte.length; j++) {
-      var valorA = datosKmTipoTransporte[j][0].toString().trim();
-      if (valorA === valorS) {
-        index = j;
-        break;
-      }
-    }
-    //Logger.log("Índice encontrado: " + index);
-
-    // Si se encuentra el valor, copiar los valores de las columnas B, C, D, E y F y pegarlos en la hoja de "Carga"
-    if (index !== -1) {
-      var valorB = hojaKmTipoTransporte.getRange(index + 2, 2).getValue(); // +2 para ajustar al índice base 1 y salto de encabezado
-      var valorC = hojaKmTipoTransporte.getRange(index + 2, 3).getValue(); // +2 para ajustar al índice base 1 y salto de encabezado
-      var valorD = hojaKmTipoTransporte.getRange(index + 2, 4).getValue(); // +2 para ajustar al índice base 1 y salto de encabezado
-      var valorE = hojaKmTipoTransporte.getRange(index + 2, 5).getValue(); // +2 para ajustar al índice base 1 y salto de encabezado
-      var valorF = hojaKmTipoTransporte.getRange(index + 2, 6).getValue(); // +2 para ajustar al índice base 1 y salto de encabezado
-      //Logger.log("Valor B: " + valorB + ", Valor C: " + valorC + ", Valor D: " + valorD + ", Valor E: " + valorE + ", Valor F: " + valorF);
-      
-      hojaCarga.getRange(18 + i, 7).setValue(valorB); // Colocar en la columna G de la hoja de "Carga"
-      hojaCarga.getRange(18 + i, 8).setValue(valorC); // Colocar en la columna H de la hoja de "Carga"
-      hojaCarga.getRange(18 + i, 9).setValue(valorD); // Colocar en la columna I de la hoja de "Carga"
-      hojaCarga.getRange(18 + i, 10).setValue(valorE); // Colocar en la columna J de la hoja de "Carga"
-      hojaCarga.getRange(18 + i, 11).setValue(valorF); // Colocar en la columna K de la hoja de "Carga"
-    }
+  // Crear un objeto para mapear los valores de la columna A a las columnas B, C, D, E y F
+  var mapaKmTipoTransporte = {};
+  for (var i = 1; i < datosKmTipoTransporte.length; i++) { // Empezamos desde 1 para saltar el encabezado
+    var valorA = datosKmTipoTransporte[i][0].toString().trim();
+    mapaKmTipoTransporte[valorA] = datosKmTipoTransporte[i].slice(1, 6); // Obtener B, C, D, E, F
   }
+
+  // Crear un array para almacenar los resultados
+  var resultados = [];
+
+  // Recorrer los datos y buscar en el mapa
+  for (var i = 0; i < numRows; i++) {
+    var valorS = datosCarga[i].toString().trim();
+    var valores = mapaKmTipoTransporte[valorS] || ["", "", "", "", ""];
+    resultados.push(valores);
+  }
+
+  // Escribir los resultados en las columnas G, H, I, J y K de la hoja "Carga"
+  hojaCarga.getRange(18, 7, numRows, 5).setValues(resultados);
 }
+
+
 
 //Funcion para calcular el Rendimiento de Combustible por Viaje (KM/Galon)
 //Operacion: Distancia recorrida por viaje/ Cantidad de Combustible por Viaje
-function calculateFuelEfficiency() {
+function calculateFuelEfficiency(numRows) {
   // ID del archivo en el que se trabajarán los datos
   var idArchivo = "19YHD7oJYoms0juBEp52rq4ljuqMucvR7gU-ZQd-ZCOA";
   
@@ -528,27 +466,21 @@ function calculateFuelEfficiency() {
   var archivoDestino = SpreadsheetApp.openById(idArchivo);
   var hojaCarga = archivoDestino.getSheetByName("Carga");
 
-  // Obtener los datos de las columnas K y O desde la fila 18 en adelante
-  var datosDistancia = hojaCarga.getRange("K18:K").getValues(); // Distancia recorrida por viaje
-  var datosCombustible = hojaCarga.getRange("O18:O").getValues(); // Cantidad de combustible por viaje
-  var numRows = datosDistancia.length;
-
+  // Obtener los datos de las columnas K y O desde la fila 18 hasta el número de filas con datos
+  var rangoDatos = hojaCarga.getRange(18, 11, numRows, 2).getValues(); // Obtiene K y O juntos
+  
   // Crear un array para almacenar los resultados del rendimiento de combustible
-  var resultados = [];
-
-  // Recorrer los datos y realizar la división (KM/Galón)
-  for (var i = 0; i < numRows; i++) {
-    var distancia = datosDistancia[i][0];
-    var combustible = datosCombustible[i][0];
-
+  var resultados = rangoDatos.map(function(fila) {
+    var distancia = fila[0];
+    var combustible = fila[1];
     // Si alguno de los valores es nulo o vacío, dejar la celda vacía
     if (distancia === "" || combustible === "" || distancia === null || combustible === null) {
-      resultados.push([""]);
+      return [""];
     } else {
       var rendimiento = (combustible !== 0) ? distancia / combustible : 0; // Evitar división por cero
-      resultados.push([rendimiento]);
+      return [rendimiento];
     }
-  }
+  });
 
   // Pegar los resultados en la columna P desde la fila 18 en adelante
   hojaCarga.getRange(18, 16, numRows, 1).setValues(resultados);
